@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Document Analyst</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <!-- PDF.js library from Mozilla CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        // Required for pdf.js to work
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+    </script>
+    <style>
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            overflow: hidden;
+        }
+        h1 {
+            font-family: 'Roboto Slab', serif;
+        }
+        .chat-bubble {
+            animation: pop-in 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+        }
+        @keyframes pop-in {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        #chat-container::-webkit-scrollbar { width: 6px; }
+        #chat-container::-webkit-scrollbar-track { background: #111827; }
+        #chat-container::-webkit-scrollbar-thumb { background-color: #4f46e5; border-radius: 20px; }
+        
+        /* Typing Indicator for Q&A */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            margin: 0 2px;
+            background-color: #818cf8;
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: 0.0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        /* Scanning Animation for Initial Analysis */
+        .scanner-container {
+            width: 100%;
+            max-width: 250px;
+            height: 150px;
+            position: relative;
+            overflow: hidden;
+        }
+        .scanner-container .doc-icon {
+            color: #6366f1;
+            width: 100px;
+            height: 100px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.3;
+        }
+        .scanner-container .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #a5b4fc, transparent);
+            animation: scan 3s ease-in-out infinite;
+            box-shadow: 0 0 10px #a5b4fc;
+        }
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+
+        /* 360 DEGREE ROTATING BORDER */
+        .animated-border-box {
+            position: relative;
+            background: #111827; 
+            padding: 2px; 
+            border-radius: 1.25rem; 
+            overflow: hidden;
+        }
+        .animated-border-box::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 250%;
+            height: 250%;
+            z-index: 0;
+            background: conic-gradient(
+                transparent, transparent, transparent, white, transparent
+            );
+            animation: rotate-border 4s linear infinite;
+            transform: translate(-50%, -50%);
+        }
+        @keyframes rotate-border {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to   { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* GLOWING BORDER ANIMATION */
+        .input-glow-effect {
+            box-shadow: 0 0 5px #a78bfa, 0 0 10px #a78bfa;
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        #new-chat-button:hover {
+             box-shadow: 0 0 8px #a78bfa, 0 0 15px #a78bfa;
+        }
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 5px #a78bfa, 0 0 10px #a78bfa;
+            }
+            50% {
+                box-shadow: 0 0 10px #c4b5fd, 0 0 20px #c4b5fd;
+            }
+        }
+    </style>
+</head>
+<body class="bg-black flex items-center justify-center h-screen p-4">
+
+    <!-- This outer div creates the animated border effect -->
+    <div class="w-full max-w-2xl h-[90vh] animated-border-box">
+        <!-- This inner div contains all the content and sits on top of the border animation -->
+        <div class="w-full h-full flex flex-col bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden relative z-10">
+            <!-- Header -->
+            <div class="p-4 border-b border-gray-700 flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-indigo-600 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line><line x1="9" y1="18" x2="15" y2="18"></line><path d="M17.5 22h.01"></path><path d="M17.5 19h.01"></path><path d="M17.5 16h.01"></path><path d="M17.5 13h.01"></path></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-white">AI Document Analyst</h1>
+                        <p id="status-text" class="text-sm text-green-400">Online</p>
+                    </div>
+                </div>
+                <button id="new-chat-button" class="p-2 rounded-full text-gray-400 hover:text-white transition-all duration-300" title="Start New Chat">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+            </div>
+
+            <!-- Chat Container -->
+            <div id="chat-container" class="flex-1 p-6 overflow-y-auto space-y-6">
+                <!-- Initial Message -->
+                <div id="initial-message" class="chat-bubble flex items-start gap-3">
+                    <div class="p-2 bg-indigo-600 rounded-full flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M12 8V4H8"/><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-4 max-w-md"><p class="text-gray-200">Welcome to your intelligent document assistant. Please provide a document (PDF, PNG, JPG), and I will perform a detailed analysis and provide a comprehensive summary to begin our conversation.</p></div>
+                </div>
+            </div>
+
+            <!-- Conversational Input Area -->
+            <div class="p-4 border-t border-gray-700 flex-shrink-0">
+                <div class="bg-gray-800 rounded-full px-2 py-1 flex items-center gap-2 input-glow-effect">
+                    <label for="file-input" id="file-input-label" class="p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.59a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                    </label>
+                    <input type="file" id="file-input" class="hidden" accept="image/png, image/jpeg, application/pdf">
+                    
+                    <input type="text" id="chat-input" placeholder="Attach a document to start..." class="flex-1 bg-transparent text-white placeholder-gray-400 focus:outline-none" disabled>
+                    
+                    <button id="submit-button" class="p-2 rounded-full bg-indigo-600 text-white hover:bg-indigo-500 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- STATE MANAGEMENT ---
+        let documentContext = "";
+        let chatHistory = [];
+        let isDocumentLoaded = false;
+        const YOUR_API_KEY = "AIzaSyBjT8zbuE_-O8ZfEyqanoBBf3VV6us_6i4"; 
+
+        // --- DOM ELEMENT REFERENCES ---
+        const chatContainer = document.getElementById('chat-container');
+        const fileInput = document.getElementById('file-input');
+        const fileInputLabel = document.getElementById('file-input-label');
+        const chatInput = document.getElementById('chat-input');
+        const submitButton = document.getElementById('submit-button');
+        const newChatButton = document.getElementById('new-chat-button');
+        const statusText = document.getElementById('status-text');
+
+        // --- EVENT LISTENERS ---
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length > 0) handleFile(files[0]);
+        });
+        
+        submitButton.addEventListener('click', handleUserInput);
+        chatInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') handleUserInput();
+        });
+        newChatButton.addEventListener('click', resetChat);
+
+        // --- CORE LOGIC ---
+
+        function resetChat() {
+            documentContext = "";
+            chatHistory = [];
+            isDocumentLoaded = false;
+            chatContainer.innerHTML = ''; 
+            displayMessage("Welcome to your intelligent document assistant. Please provide a document (PDF, PNG, JPG), and I will perform a detailed analysis and provide a comprehensive summary to begin our conversation.", 'ai');
+            updateUiState();
+            fileInput.value = '';
+        }
+
+        function updateUiState() {
+            if (isDocumentLoaded) {
+                chatInput.disabled = false;
+                submitButton.disabled = false;
+                fileInputLabel.classList.add('hidden');
+                chatInput.placeholder = "Ask a question about the document...";
+                statusText.textContent = "Document Ready";
+                statusText.classList.replace('text-green-400', 'text-cyan-400');
+            } else {
+                chatInput.disabled = true;
+                submitButton.disabled = true;
+                fileInputLabel.classList.remove('hidden');
+                chatInput.placeholder = "Attach a document to start...";
+                statusText.textContent = "Online";
+                statusText.classList.replace('text-cyan-400', 'text-green-400');
+            }
+        }
+
+        function handleUserInput() {
+            const question = chatInput.value.trim();
+            if (!question) return;
+
+            displayMessage(question, 'user');
+            chatInput.value = '';
+            
+            getAiResponse(question);
+        }
+
+        function handleFile(file) {
+            resetChat(); 
+            if (file.type.startsWith('image/')) {
+                processImageFile(file);
+            } else if (file.type === 'application/pdf') {
+                processPdfFile(file);
+            } else {
+                displayMessage('<p class="text-red-400">Unsupported file type. Please upload a PNG, JPG, or PDF.</p>', 'ai');
+            }
+            fileInput.value = '';
+        }
+
+        async function processImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                displayMessage(`<div class="p-2 bg-gray-700 rounded-lg"><img src="${e.target.result}" alt="Document Preview" class="rounded-md max-h-60"></div>`, 'user');
+                const loadingElement = displayMessage('', 'scanning');
+                const base64ImageData = e.target.result.split(',')[1];
+                const text = await extractTextFromImage(base64ImageData);
+                if (text) {
+                    documentContext += text + "\n\n";
+                }
+                loadingElement.remove();
+                await finishProcessing();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function processPdfFile(file) {
+            displayMessage(`<p class="text-gray-300">Analyzing PDF: ${file.name}</p>`, 'user');
+            const loadingElement = displayMessage('', 'scanning');
+            
+            try {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const typedarray = new Uint8Array(e.target.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    
+                    let fullText = "";
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        await page.render({ canvasContext: context, viewport: viewport }).promise;
+                        
+                        const base64ImageData = canvas.toDataURL('image/jpeg').split(',')[1];
+                        const text = await extractTextFromImage(base64ImageData);
+                        if (text) {
+                            fullText += `--- Page ${i} Content ---\n${text}\n\n`;
+                        }
+                    }
+                    documentContext = fullText;
+                    loadingElement.remove();
+                    await finishProcessing();
+                };
+                reader.readAsArrayBuffer(file);
+            } catch (error) {
+                console.error("PDF Processing Error:", error);
+                loadingElement.remove();
+                displayMessage(`<p class="text-red-400">Sorry, there was an error processing the PDF file.</p>`, 'ai');
+                updateUiState();
+            }
+        }
+        
+        async function finishProcessing() {
+            if (documentContext.trim().length > 0) {
+                await generateDocumentSummary();
+                isDocumentLoaded = true;
+            } else {
+                displayMessage("I couldn't extract any text from the document. Please try a different one.", 'ai');
+            }
+            updateUiState();
+        }
+
+        async function generateDocumentSummary() {
+            const loadingElement = displayMessage('', 'typing');
+            
+            const prompt = `You are a professional document analyst. Based on the following document text, provide a detailed, end-to-end summary. The summary must be well-structured, easy to read, and use professional language. 
+            - Use markdown for formatting: '##' for main headings, '###' for subheadings, '*' for bolding key terms, and '-' for bullet points.
+            - Ensure perfect grammar and punctuation.
+            Here is the document text:\n\n${documentContext}`;
+            
+            const summaryPayload = { contents: [{ parts: [{ text: prompt }] }] };
+
+            const answer = await makeApiCall(summaryPayload);
+
+            loadingElement.remove();
+
+            if (answer) {
+                displayMessage(`Here is a summary of the document:<br><br>${answer}`, 'ai');
+                chatHistory.push({
+                    role: "user",
+                    parts: [{ text: `You are a professional document analyst. The user has provided you with a document with the following content:\n\n${documentContext}\n\nYou have already provided an initial summary. Now, answer the user's follow-up questions based *only* on the provided document content. Your answers must be well-punctuated, professionally formatted, and use markdown for emphasis where appropriate.` }]
+                });
+                chatHistory.push({
+                    role: "model",
+                    parts: [{ text: "I have analyzed the document and provided a summary. What else would you like to know?" }]
+                });
+            } else {
+                displayMessage("I was unable to generate a summary for this document.", 'ai');
+            }
+        }
+
+        async function getAiResponse(question) {
+            const loadingElement = displayMessage('', 'typing');
+            
+            chatHistory.push({ role: "user", parts: [{ text: question }] });
+
+            const answer = await makeApiCall({ contents: chatHistory });
+            
+            loadingElement.remove();
+
+            if (answer) {
+                chatHistory.push({ role: "model", parts: [{ text: answer }] });
+                displayMessage(answer, 'ai');
+            } else {
+                 displayMessage(`<p class="text-red-400">Sorry, I encountered an error. Please try asking again.</p>`, 'ai');
+            }
+        }
+        
+        async function makeApiCall(payload) {
+            if (!YOUR_API_KEY) {
+                displayMessage('<p class="text-red-400 font-semibold">API Key Missing</p><p class="text-gray-300 mt-2">Please add your Google AI API key to the `YOUR_API_KEY` constant.</p>', 'ai');
+                return null;
+            }
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${YOUR_API_KEY}`;
+            try {
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                const result = await response.json();
+                if (result.candidates && result.candidates[0].content.parts[0]) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    return "I am unable to provide a response for that request.";
+                }
+            } catch (error) {
+                console.error("API Call Error:", error);
+                return null;
+            }
+        }
+
+        async function extractTextFromImage(base64ImageData) {
+            const prompt = "Extract all visible text from this document image. Output only the raw text, with no additional commentary or formatting.";
+            const payload = {
+                contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64ImageData } }] }]
+            };
+            return await makeApiCall(payload);
+        }
+
+        function displayMessage(content, sender) {
+            const messageId = `msg-${Date.now()}`;
+            let messageElement;
+            const aiAvatar = `<div class="p-2 bg-indigo-600 rounded-full flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M12 8V4H8"/><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></div>`;
+
+            if (sender === 'scanning') {
+                messageElement = `<div id="${messageId}" class="chat-bubble flex items-start gap-3">${aiAvatar}<div class="bg-gray-800 rounded-lg p-4 max-w-md flex flex-col items-center justify-center space-y-2"><div class="scanner-container"><div class="scan-line"></div><svg class="doc-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></div><p class="text-gray-300 text-sm font-medium">Analyzing document...</p></div></div>`;
+            } else if (sender === 'typing') {
+                messageElement = `<div id="${messageId}" class="chat-bubble flex items-start gap-3">${aiAvatar}<div class="bg-gray-800 rounded-lg p-4 max-w-md flex items-center justify-center"><div class="typing-indicator"><span></span><span></span><span></span></div></div></div>`;
+            }
+            else if (sender === 'user') {
+                const userContent = content.trim().startsWith('<div') ? content : `<p class="text-white">${content}</p>`;
+                messageElement = `<div id="${messageId}" class="chat-bubble flex items-start gap-3 justify-end"><div class="bg-indigo-600 rounded-lg p-4 max-w-md">${userContent}</div></div>`;
+            } else { // AI sender
+                // --- FIXED MARKDOWN PARSING ---
+                let formattedContent = content
+                    .replace(/^### (.*$)/gim, '<h4 class="text-md font-semibold text-white mt-2">$1</h4>')
+                    .replace(/^## (.*$)/gim, '<h3 class="text-lg font-bold text-white">$1</h3>')
+                    .replace(/^# (.*$)/gim, '<h2 class="text-xl font-bold text-white border-b border-gray-600 pb-1 mb-2">$1</h2>')
+                    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') 
+                    .replace(/\*(.*?)\*/g, '<b>$1</b>')   
+                    .replace(/^\s*[-*] (.*$)/gim, '<li class="ml-4 list-disc">$1</li>');
+                
+                formattedContent = formattedContent.replace(/(\r\n|\n|\r)/gm, '<br>');
+                // This is a post-processing step to wrap list items in a <ul> tag.
+                formattedContent = formattedContent.replace(/(<br>)?(<li.*>.*?<\/li>)/g, '$2');
+                if (formattedContent.includes('<li>')) {
+                    formattedContent = `<ul>${formattedContent}</ul>`.replace(/<\/li><br>/g, '</li>').replace(/<\/ul><br>/g, '</ul>');
+                }
+
+                const aiContent = `<div class="text-gray-200 space-y-2">${formattedContent}</div>`;
+                messageElement = `<div id="${messageId}" class="chat-bubble flex items-start gap-3">${aiAvatar}<div class="bg-gray-800 rounded-lg p-4 max-w-full">${aiContent}</div></div>`;
+            }
+
+            chatContainer.insertAdjacentHTML('beforeend', messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return document.getElementById(messageId);
+        }
+        
+        resetChat();
+    </script>
+</body>
+</html>
