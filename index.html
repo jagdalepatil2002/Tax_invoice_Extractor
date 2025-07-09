@@ -104,6 +104,7 @@
                 <div class="flex flex-col space-y-6">
                     <div>
                         <h2 class="flex items-center text-xl font-semibold mb-3 text-fuchsia-300">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-fuchsia-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
                            1. Upload a File
                         </h2>
                         <div id="dropzone" class="border-2 border-dashed border-violet-700 rounded-lg p-8 text-center cursor-pointer hover:border-fuchsia-500 hover:bg-violet-900/50 transition-all duration-300">
@@ -125,12 +126,14 @@
 
                     <div>
                         <h2 class="flex items-center text-xl font-semibold mb-3 text-fuchsia-300">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-fuchsia-400"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"/></svg>
                            2. Provide Image URL
                         </h2>
                         <input type="text" id="imageUrl" placeholder="https://example.com/image.png" class="w-full bg-violet-900/50 border border-violet-700 rounded-md p-3 focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 outline-none transition disabled:bg-violet-900/20 disabled:cursor-not-allowed">
                     </div>
 
                     <button id="processBtn" class="btn-neon w-full flex items-center justify-center font-bold py-3 px-4 rounded-lg" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
                         <span id="btnText">Extract Data</span>
                         <div id="btnLoader" class="loader w-5 h-5 border-4 rounded-full hidden"></div>
                     </button>
@@ -140,9 +143,11 @@
                 <div class="flex flex-col">
                     <div class="flex justify-between items-center mb-3">
                          <h2 class="flex items-center text-xl font-semibold text-fuchsia-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-fuchsia-400"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                             Formatted Data
                         </h2>
-                        <button id="copyBtn" class="bg-violet-800 hover:bg-violet-700 text-violet-300 font-semibold py-2 px-4 rounded-md text-sm transition-colors disabled:opacity-50">
+                        <button id="copyBtn" class="flex items-center bg-violet-800 hover:bg-violet-700 text-violet-300 font-semibold py-2 px-4 rounded-md text-sm transition-colors disabled:opacity-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                             Copy
                         </button>
                     </div>
@@ -153,13 +158,356 @@
                 </div>
             </div>
         </main>
-        <footer class="text-center py-8 text-sm text-violet-500">
-            <p>Built by Tejas Jagdale &amp; the DataLens Team</p>
-            <p id="copyright" class="mt-1"></p>
-        </footer>
     </div>
     <script>
-        const fileUpload=document.getElementById("fileUpload"),imageUrlInput=document.getElementById("imageUrl"),processBtn=document.getElementById("processBtn"),btnTextContainer=processBtn.querySelector("span").parentElement,btnTextSpan=document.getElementById("btnText"),btnLoader=document.getElementById("btnLoader"),statusEl=document.getElementById("status"),jsonOutputEl=document.getElementById("json-output"),copyBtn=document.getElementById("copyBtn"),dropzone=document.getElementById("dropzone"),fileNameEl=document.getElementById("fileName"),copyrightEl=document.getElementById("copyright");let currentFile=null,processedDataForCopy=[];pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js",dropzone.addEventListener("click",()=>fileUpload.click()),dropzone.addEventListener("dragover",e=>{e.preventDefault(),dropzone.classList.add("border-fuchsia-500","bg-violet-900/50")}),dropzone.addEventListener("dragleave",()=>{dropzone.classList.remove("border-fuchsia-500","bg-violet-900/50")}),dropzone.addEventListener("drop",e=>{e.preventDefault(),dropzone.classList.remove("border-fuchsia-500","bg-violet-900/50"),e.dataTransfer.files.length&&handleFile(e.dataTransfer.files[0])}),fileUpload.addEventListener("change",e=>{e.target.files.length&&handleFile(e.target.files[0])}),imageUrlInput.addEventListener("input",()=>{""!==imageUrlInput.value.trim()?(clearFileInput(),updateProcessButtonState(!0)):updateProcessButtonState(!1)}),processBtn.addEventListener("click",processInput),copyBtn.addEventListener("click",copyToClipboard),document.addEventListener("keydown",function(e){"Enter"===e.key&&!processBtn.disabled&&(e.preventDefault(),processInput())}),copyrightEl.textContent=`\xa9 ${new Date().getFullYear()} DataLens. All Rights Reserved.`;function updateProcessButtonState(e){processBtn.disabled=!e,e?processBtn.classList.add("ready-to-process"):processBtn.classList.remove("ready-to-process")}function handleFile(e){return e.type.startsWith("image/")||"application/pdf"===e.type?(clearFileInput(!1),currentFile=e,fileNameEl.textContent=e.name,fileNameEl.classList.remove("text-red-400"),fileNameEl.classList.add("text-fuchsia-400"),imageUrlInput.disabled=!0,dropzone.classList.add("file-uploaded"),void updateProcessButtonState(!0)):(fileNameEl.textContent="Invalid file type. Please select an Image or PDF.",fileNameEl.classList.add("text-red-400"),fileNameEl.classList.remove("text-fuchsia-400"),currentFile=null,void updateProcessButtonState(!1))}function clearFileInput(e=!0){e&&(currentFile=null,fileUpload.value=""),fileNameEl.textContent="",imageUrlInput.disabled=!1,dropzone.classList.remove("file-uploaded"),updateProcessButtonState(!1)}function setLoading(e){processBtn.disabled=e,e?(processBtn.classList.remove("ready-to-process"),btnTextContainer.querySelector("svg")?.classList.add("hidden"),btnTextSpan.classList.add("hidden"),btnLoader.classList.remove("hidden"),statusEl.textContent="Initializing...",jsonOutputEl.innerHTML='<span class="text-violet-500">Processing...</span>',copyBtn.disabled=!0):(btnTextContainer.querySelector("svg")?.classList.remove("hidden"),btnTextSpan.classList.remove("hidden"),btnLoader.classList.add("hidden"),updateProcessButtonState(!!currentFile||""!==imageUrlInput.value.trim()))}function formatExtractedData(e){const t={};let n=e.replace(/(\w)you(\w)/g,"$1 you $2");n=n.replace(/Failure-to-?file/gi,"Failure-to-file"),n=n.replace(/Failure-to-?pay/gi,"Failure-to-pay"),n=n.replace(/[~_]+/g,"");let a=n;const o={},i=[{key:"Notice Identifier",regex:/Notice\s+(CP\w+)/i},{key:"Tax Year",regex:/Tax year\s+(\d{4})/i},{key:"Notice Date",regex:/Notice date\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})/i},{key:"Social Security Number",regex:/Social security number\s+([n\d-]+)/i},{key:"Contact Phone",regex:/To contact us\s+([\d-]+(?:\s+EXT\.\s+\w+)?)/i},{key:"Caller ID",regex:/Your caller ID\s+([a-z0-9]+)/i},{key:"Page",regex:/Page\s+(\d+\s+of\s+\d+)/i},{key:"Notice Identifier",regex:/Notice identifier\s+([A-Z0-9]+)/i}];i.forEach(e=>{if(!o[e.key]){const t=a.match(e.regex);t&&t[1]&&(o[e.key]=t[1].trim(),a=a.replace(t[0],""))}}),Object.keys(o).length>0&&(t["Notice Details"]=o);const l={},r=[{key:"Recipient Name",regex:/^([A-Z\s,.]+Q\.[A-Z\s,.]+)/m},{key:"Recipient Address",regex:/\d{2,}\s+[A-Z\s,.]+\n[A-Z\s,.]+\s+[A-Z]{2}\s+\d{5}-\d{4}/m}];r.forEach(e=>{const t=a.match(e.regex);if(t){const n=(t[1]||t[0]).trim().replace(/\n/g,", ");Object.values(l).includes(n)||(l[e.key]=n),a=a.replace(t[0],"")}}),Object.keys(l).length>0&&(t["Recipient Info"]=l);const s={},c=/Billing Summary([\s\S]*?)(?=Amount due by|What you need to do|If you agree)/m,d=a.match(c);if(d&&d[1]){const e=d[1];let t;const n=/^(Tax you owed|Payments you made|Failure-to-file penalty|Failure-to-pay penalty|Interest charges)\s+(-?\$?[\d,.]+\.\d{2})$/gm;for(;(t=n.exec(e))!==null;)s[t[1].trim()]=t[2].trim();Object.keys(s).length>0&&(t["Billing Summary"]=s,a=a.replace(d[0],""))}const u={key:"Amount Due",regex:/(?:Amount due|Amount due by.*?)\s+(\$ ?[\d,.]+\.\d{2})/gi},p=n.match(u.regex);if(p){const e=[...new Set(p.map(e=>e.match(/\$?[\d,.]+\.\d{2}/)[0]))];t["Amount Due"]=e,p.forEach(e=>{a=a.replace(e,"")})}const m={key:"Due Date",regex:/Amount due by\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})/i},g=a.match(m);g&&g[1]&&(t[m.key]=g[1].trim(),a=a.replace(g[0],""));const f=[/eet eee/,/RARER SRR/,/OTANUED ON DECK/,/^\s*e\s/,/^\d{4}\s\d{7}\s\d{10}\s\d{4}$/],y=a.split("\n").map(e=>e.trim()).filter(e=>{if(e.length<5)return!1;if(/^\s*$/.test(e))return!1;if(Object.values(o).some(t=>e.includes(t)))return!1;if(Object.values(l).some(t=>e.includes(t.split(",")[0])))return!1;if(f.some(t=>t.test(e)))return!1;return!0});return y.length>0&&(t["Other Information"]=y),t}async function processInput(){const e=imageUrlInput.value.trim();if(!currentFile&&!e)return statusEl.textContent="Please upload a file or provide an image URL.",void statusEl.classList.add("text-red-400");statusEl.classList.remove("text-red-400"),setLoading(!0);try{let e=[];e=currentFile?"application/pdf"===currentFile.type?await processPdf(currentFile):[await processImage(currentFile)]:[await processImage(imageUrlInput.value.trim())];const n=e.map(e=>formatExtractedData(e));processedDataForCopy=n;const a=1===n.length?n[0]:n,o=JSON.stringify(a,null,2);jsonOutputEl.innerHTML=syntaxHighlight(o),copyBtn.disabled=!1,statusEl.textContent="Extraction Complete!",statusEl.classList.add("text-fuchsia-400")}catch(e){console.error(e),statusEl.textContent="Error during processing. Check console for details.",statusEl.classList.add("text-red-400"),jsonOutputEl.innerHTML='<span class="text-red-400">Failed to process file. The document format might not be supported by the parser.</span>'}finally{setLoading(!1)}}async function processImage(e){return(await Tesseract.recognize(e,"eng")).data.text}async function processPdf(e){const t=new FileReader;return new Promise((n,a)=>{t.onload=async()=>{try{const e=new Uint8Array(t.result),a=await pdfjsLib.getDocument(e).promise;let o=[];for(let e=1;e<=a.numPages;e++){statusEl.textContent=`Rendering page ${e} of ${a.numPages}...`;const t=await a.getPage(e),i=t.getViewport({scale:2});document.createElement("canvas");const l=document.createElement("canvas").getContext("2d");l.canvas.height=i.height,l.canvas.width=i.width,await t.render({canvasContext:l,viewport:i}).promise,statusEl.textContent=`Page ${e}/${a.numPages}: Recognizing text...`;const r=(await Tesseract.recognize(l.canvas.toDataURL("image/png"),"eng")).data.text;o.push(r)}n(o)}catch(e){a(e)}},t.onerror=a,t.readAsArrayBuffer(e)})}function syntaxHighlight(e){return e?(e=e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")).replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,function(e){let t="json-number";return/^"/.test(e)&&(t=/:$/.test(e)?"json-key":"json-string"),'<span class="'+t+'">'+e+"</span>"}):""}function copyToClipboard(){let e="";processedDataForCopy.forEach((t,n)=>{processedDataForCopy.length>1&&(e+=`--- Page ${n+1} ---\n`);const a=["Notice Details","Recipient Info","Billing Summary","Amount Due","Due Date","Other Information"];a.forEach(n=>{if(t[n]){const a=t[n];if(Array.isArray(a))e+=`${n}: ${a.join(", ")}\n`;else if("object"==typeof a&&null!==a){e+=`${n}:\n`;for(const[t,o]of Object.entries(a))e+=`  ${t}: ${o}\n`}else e+=`${n}: ${a}\n`}}),processedDataForCopy.length>1&&(e+="\n")});const t=document.createElement("textarea");t.value=e.trim(),t.style.position="fixed",t.style.left="-9999px",document.body.appendChild(t),t.select();try{document.execCommand("copy"),statusEl.textContent="Formatted text copied to clipboard!"}catch(e){statusEl.textContent="Failed to copy."}document.body.removeChild(t)}
+        // --- DOM Elements ---
+        const fileUpload = document.getElementById('fileUpload');
+        const imageUrlInput = document.getElementById('imageUrl');
+        const processBtn = document.getElementById('processBtn');
+        const btnTextContainer = processBtn.querySelector('span').parentElement;
+        const btnTextSpan = document.getElementById('btnText');
+        const btnLoader = document.getElementById('btnLoader');
+        const statusEl = document.getElementById('status');
+        const jsonOutputEl = document.getElementById('json-output');
+        const copyBtn = document.getElementById('copyBtn');
+        const dropzone = document.getElementById('dropzone');
+        const fileNameEl = document.getElementById('fileName');
+
+        let currentFile = null;
+        let processedDataForCopy = [];
+        
+        // Setup PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // --- Event Listeners ---
+        dropzone.addEventListener('click', () => fileUpload.click());
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-fuchsia-500', 'bg-violet-900/50'); });
+        dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('border-fuchsia-500', 'bg-violet-900/50'); });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('border-fuchsia-500', 'bg-violet-900/50');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+        fileUpload.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
+        imageUrlInput.addEventListener('input', () => {
+            if (imageUrlInput.value.trim() !== '') {
+                clearFileInput();
+                updateProcessButtonState(true);
+            } else {
+                updateProcessButtonState(false);
+            }
+        });
+        processBtn.addEventListener('click', processInput);
+        copyBtn.addEventListener('click', copyToClipboard);
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !processBtn.disabled) {
+                event.preventDefault();
+                processInput();
+            }
+        });
+
+        // --- Core Functions ---
+        function updateProcessButtonState(isReady) {
+            processBtn.disabled = !isReady;
+            if (isReady) {
+                processBtn.classList.add('ready-to-process');
+            } else {
+                processBtn.classList.remove('ready-to-process');
+            }
+        }
+        
+        function handleFile(file) {
+            if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+                fileNameEl.textContent = "Invalid file type. Please select an Image or PDF.";
+                fileNameEl.classList.add('text-red-400');
+                fileNameEl.classList.remove('text-fuchsia-400');
+                currentFile = null;
+                updateProcessButtonState(false);
+                return;
+            }
+            clearFileInput(false);
+            currentFile = file;
+            fileNameEl.textContent = file.name;
+            fileNameEl.classList.remove('text-red-400');
+            fileNameEl.classList.add('text-fuchsia-400');
+            imageUrlInput.disabled = true;
+            dropzone.classList.add('file-uploaded');
+            updateProcessButtonState(true);
+        }
+        
+        function clearFileInput(resetValue = true) {
+            if (resetValue) {
+                currentFile = null;
+                fileUpload.value = '';
+            }
+            fileNameEl.textContent = '';
+            imageUrlInput.disabled = false;
+            imageUrlInput.value = '';
+            dropzone.classList.remove('file-uploaded');
+            updateProcessButtonState(false);
+        }
+
+        function setLoading(isLoading) {
+            processBtn.disabled = isLoading;
+            if (isLoading) {
+                processBtn.classList.remove('ready-to-process');
+                btnTextContainer.querySelector('svg')?.classList.add('hidden');
+                btnTextSpan.classList.add('hidden');
+                btnLoader.classList.remove('hidden');
+                statusEl.textContent = 'Initializing...';
+                jsonOutputEl.innerHTML = '<span class="text-violet-500">Processing...</span>';
+                copyBtn.disabled = true;
+            } else {
+                btnTextContainer.querySelector('svg')?.classList.remove('hidden');
+                btnTextSpan.classList.remove('hidden');
+                btnLoader.classList.add('hidden');
+                updateProcessButtonState(!!currentFile || imageUrlInput.value.trim() !== '');
+            }
+        }
+        
+        function formatExtractedData(text) {
+            const data = {};
+            
+            let cleanedText = text.replace(/(\w)you(\w)/g, '$1 you $2');
+            cleanedText = cleanedText.replace(/Failure-to-?file/gi, 'Failure-to-file');
+            cleanedText = cleanedText.replace(/Failure-to-?pay/gi, 'Failure-to-pay');
+            cleanedText = cleanedText.replace(/[~_]+/g, '');
+            
+            let remainingText = cleanedText;
+
+            const noticeDetails = {};
+            const noticeRules = [
+                { key: 'Notice Identifier', regex: /Notice\s+(CP\w+)/i },
+                { key: 'Tax Year', regex: /Tax year\s+(\d{4})/i },
+                { key: 'Notice Date', regex: /Notice date\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})/i },
+                { key: 'Social Security Number', regex: /Social security number\s+([n\d-]+)/i },
+                { key: 'Contact Phone', regex: /To contact us\s+([\d-]+(?:\s+EXT\.\s+\w+)?)/i },
+                { key: 'Caller ID', regex: /Your caller ID\s+([a-z0-9]+)/i },
+                { key: 'Page', regex: /Page\s+(\d+\s+of\s+\d+)/i },
+                { key: 'Notice Identifier', regex: /Notice identifier\s+([A-Z0-9]+)/i },
+            ];
+            
+            noticeRules.forEach(rule => {
+                if (!noticeDetails[rule.key]) {
+                    const match = remainingText.match(rule.regex);
+                    if (match && match[1]) {
+                        noticeDetails[rule.key] = match[1].trim();
+                        remainingText = remainingText.replace(match[0], '');
+                    }
+                }
+            });
+            if (Object.keys(noticeDetails).length > 0) {
+                data['Notice Details'] = noticeDetails;
+            }
+
+            const recipientInfo = {};
+            const recipientRules = [
+                 { key: 'Recipient Name', regex: /^([A-Z\s,.]+Q\.[A-Z\s,.]+)/m },
+                 { key: 'Recipient Address', regex: /\d{2,}\s+[A-Z\s,.]+\n[A-Z\s,.]+\s+[A-Z]{2}\s+\d{5}-\d{4}/m },
+            ];
+            recipientRules.forEach(rule => {
+                const match = remainingText.match(rule.regex);
+                if (match) {
+                    const value = (match[1] || match[0]).trim().replace(/\n/g, ', ');
+                    if (!Object.values(recipientInfo).includes(value)) {
+                       recipientInfo[rule.key] = value;
+                    }
+                    remainingText = remainingText.replace(match[0], '');
+                }
+            });
+             if (Object.keys(recipientInfo).length > 0) {
+                data['Recipient Info'] = recipientInfo;
+            }
+
+            const billingSummary = {};
+            const billingBlockRegex = /Billing Summary([\s\S]*?)(?=Amount due by|What you need to do|If you agree)/m;
+            const billingBlockMatch = remainingText.match(billingBlockRegex);
+            if (billingBlockMatch && billingBlockMatch[1]) {
+                const billingText = billingBlockMatch[1];
+                const billingLineRegex = /^(Tax you owed|Payments you made|Failure-to-file penalty|Failure-to-pay penalty|Interest charges)\s+(-?\$?[\d,.]+\.\d{2})/gm;
+                let lineMatch;
+                while ((lineMatch = billingLineRegex.exec(billingText)) !== null) {
+                    billingSummary[lineMatch[1].trim()] = lineMatch[2].trim();
+                }
+                if (Object.keys(billingSummary).length > 0) {
+                    data['Billing Summary'] = billingSummary;
+                    remainingText = remainingText.replace(billingBlockMatch[0], '');
+                }
+            }
+
+            const amountDueRule = { key: 'Amount Due', regex: /(?:Amount due|Amount due by.*?)\s+(\$ ?[\d,.]+\.\d{2})/gi };
+            const amountMatches = cleanedText.match(amountDueRule.regex);
+            if (amountMatches) {
+                const uniqueAmounts = [...new Set(amountMatches.map(m => m.match(/\$?[\d,.]+\.\d{2}/)[0]))];
+                data['Amount Due'] = uniqueAmounts;
+                amountMatches.forEach(fullMatchStr => {
+                    remainingText = remainingText.replace(fullMatchStr, '');
+                });
+            }
+            const dueDateRule = { key: 'Due Date', regex: /Amount due by\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})/i };
+            const dueDateMatch = remainingText.match(dueDateRule);
+            if (dueDateMatch && dueDateMatch[1]) {
+                data[dueDateRule.key] = dueDateMatch[1].trim();
+                remainingText = remainingText.replace(dueDateMatch[0], '');
+            }
+
+            const junkPatterns = [
+                /eet eee/, /RARER SRR/, /OTANUED ON DECK/, /^\s*e\s/, /^\d{4}\s\d{7}\s\d{10}\s\d{4}$/
+            ];
+            const otherInfo = remainingText
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => {
+                    if (line.length < 5) return false;
+                    if (/^\s*$/.test(line)) return false;
+                    if (Object.values(noticeDetails).some(val => line.includes(val))) return false;
+                    if (Object.values(recipientInfo).some(val => line.includes(val.split(',')[0]))) return false;
+                    if (junkPatterns.some(pattern => pattern.test(line))) return false;
+                    return true;
+                });
+
+            if (otherInfo.length > 0) {
+                data['Other Information'] = otherInfo;
+            }
+
+            return data;
+        }
+
+        async function processInput() {
+            const imageUrl = imageUrlInput.value.trim();
+            if (!currentFile && !imageUrl) {
+                statusEl.textContent = 'Please upload a file or provide an image URL.';
+                statusEl.classList.add('text-red-400');
+                return;
+            }
+            statusEl.classList.remove('text-red-400');
+            setLoading(true);
+
+            try {
+                let pagesContent = [];
+                if (currentFile) {
+                    pagesContent = (currentFile.type === 'application/pdf')
+                        ? await processPdf(currentFile)
+                        : [await processImage(currentFile)];
+                } else {
+                    pagesContent = [await processImage(imageUrlInput.value.trim())];
+                }
+                
+                const formattedPages = pagesContent.map(pageText => formatExtractedData(pageText));
+                processedDataForCopy = formattedPages;
+                
+                const displayData = formattedPages.length === 1 ? formattedPages[0] : formattedPages;
+                
+                const jsonString = JSON.stringify(displayData, null, 2);
+                jsonOutputEl.innerHTML = syntaxHighlight(jsonString);
+                copyBtn.disabled = false;
+
+                statusEl.textContent = 'Extraction Complete!';
+                statusEl.classList.add('text-fuchsia-400');
+
+            } catch (error) {
+                console.error(error);
+                statusEl.textContent = 'Error during processing. Check console for details.';
+                statusEl.classList.add('text-red-400');
+                jsonOutputEl.innerHTML = `<span class="text-red-400">Failed to process file. The document format might not be supported by the parser.</span>`;
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function processImage(imageSource) {
+            const { data } = await Tesseract.recognize(imageSource, 'eng');
+            return data.text;
+        }
+
+        async function processPdf(file) {
+             const fileReader = new FileReader();
+            
+            return new Promise((resolve, reject) => {
+                fileReader.onload = async () => {
+                    try {
+                        const typedarray = new Uint8Array(fileReader.result);
+                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                        let allPagesText = [];
+
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            statusEl.textContent = `Rendering page ${i} of ${pdf.numPages}...`;
+                            const page = await pdf.getPage(i);
+                            const viewport = page.getViewport({ scale: 2.0 });
+                            
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+                            
+                            await page.render({ canvasContext: context, viewport: viewport }).promise;
+                            
+                            statusEl.textContent = `Page ${i}/${pdf.numPages}: Recognizing text...`;
+                            const { data } = await Tesseract.recognize(canvas.toDataURL('image/png'), 'eng');
+                            allPagesText.push(data.text);
+                        }
+                        resolve(allPagesText);
+                    } catch (error) { reject(error); }
+                };
+                fileReader.onerror = reject;
+                fileReader.readAsArrayBuffer(file);
+            });
+        }
+
+        function syntaxHighlight(json) {
+            if (!json) return '';
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    cls = /:$/.test(match) ? 'json-key' : 'json-string';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        function copyToClipboard() {
+            let textToCopy = '';
+            processedDataForCopy.forEach((pageData, index) => {
+                if(processedDataForCopy.length > 1) {
+                    textToCopy += `--- Page ${index + 1} ---\n`;
+                }
+                const keyOrder = ['Notice Details', 'Recipient Info', 'Billing Summary', 'Amount Due', 'Due Date', 'Other Information'];
+                keyOrder.forEach(key => {
+                    if (pageData[key]) {
+                        const value = pageData[key];
+                        if (Array.isArray(value)) {
+                            textToCopy += `${key}: ${value.join(', ')}\n`;
+                        } else if (typeof value === 'object' && value !== null) {
+                            textToCopy += `${key}:\n`;
+                            for (const [subKey, subValue] of Object.entries(value)) {
+                                textToCopy += `  ${subKey}: ${subValue}\n`;
+                            }
+                        } else {
+                            textToCopy += `${key}: ${value}\n`;
+                        }
+                    }
+                });
+                 if(processedDataForCopy.length > 1) {
+                    textToCopy += `\n`;
+                }
+            });
+
+            const textArea = document.createElement('textarea');
+            textArea.value = textToCopy.trim();
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                statusEl.textContent = 'Formatted text copied to clipboard!';
+            } catch (err) {
+                statusEl.textContent = 'Failed to copy.';
+            }
+            document.body.removeChild(textArea);
+        }
     </script>
 </body>
 </html>
