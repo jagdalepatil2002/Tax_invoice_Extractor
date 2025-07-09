@@ -189,14 +189,18 @@
             if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
         });
         fileUpload.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
+        
+        // REVISED: Event listener for URL input
         imageUrlInput.addEventListener('input', () => {
             if (imageUrlInput.value.trim() !== '') {
-                clearFileInput();
+                // If user types in URL, clear the file input state
+                clearFileState();
                 updateProcessButtonState(true);
             } else {
                 updateProcessButtonState(false);
             }
         });
+
         processBtn.addEventListener('click', processInput);
         copyBtn.addEventListener('click', copyToClipboard);
 
@@ -217,6 +221,21 @@
             }
         }
         
+        // REVISED: Function to specifically clear file-related state
+        function clearFileState() {
+            currentFile = null;
+            fileUpload.value = '';
+            fileNameEl.textContent = '';
+            dropzone.classList.remove('file-uploaded');
+            imageUrlInput.disabled = false;
+        }
+
+        // REVISED: Function to specifically clear URL-related state
+        function clearUrlState() {
+            imageUrlInput.value = '';
+            fileUpload.disabled = false;
+        }
+        
         function handleFile(file) {
             if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
                 fileNameEl.textContent = "Invalid file type. Please select an Image or PDF.";
@@ -226,7 +245,9 @@
                 updateProcessButtonState(false);
                 return;
             }
-            clearFileInput(false);
+            // Clear the other input's state
+            clearUrlState();
+
             currentFile = file;
             fileNameEl.textContent = file.name;
             fileNameEl.classList.remove('text-red-400');
@@ -234,18 +255,6 @@
             imageUrlInput.disabled = true;
             dropzone.classList.add('file-uploaded');
             updateProcessButtonState(true);
-        }
-        
-        function clearFileInput(resetValue = true) {
-            if (resetValue) {
-                currentFile = null;
-                fileUpload.value = '';
-            }
-            fileNameEl.textContent = '';
-            imageUrlInput.disabled = false;
-            imageUrlInput.value = '';
-            dropzone.classList.remove('file-uploaded');
-            updateProcessButtonState(false);
         }
 
         function setLoading(isLoading) {
@@ -259,10 +268,15 @@
                 jsonOutputEl.innerHTML = '<span class="text-violet-500">Processing...</span>';
                 copyBtn.disabled = true;
             } else {
+                // REVISED: Reset UI state for next operation
                 btnTextContainer.querySelector('svg')?.classList.remove('hidden');
                 btnTextSpan.classList.remove('hidden');
                 btnLoader.classList.add('hidden');
-                updateProcessButtonState(!!currentFile || imageUrlInput.value.trim() !== '');
+                // Don't re-enable the button immediately, let the user decide the next input
+                updateProcessButtonState(false);
+                // Fully reset inputs to allow a new, clean operation
+                clearFileState();
+                clearUrlState();
             }
         }
         
